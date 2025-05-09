@@ -45,7 +45,6 @@ if generate_button:
 
     if not client_url:
         st.sidebar.error("Please provide a valid client website URL.")
-    # Add more specific link validations if needed (e.g. ensure demo link is provided if demo objective)
     elif not active_lead_link:
         st.sidebar.error(f"Please provide the link for '{lead_objective_type}'.")
     elif not learn_more_link:
@@ -60,19 +59,23 @@ if generate_button:
         company_name_for_file = get_company_name_from_url(client_url)
         all_summaries = []
         total_steps = 3 + 1 + 3 + 3 + 1 + 1 # Summaries + Email + LinkedIn(3) + Facebook(3) + GSearch + GDisplay
-        current_step = 0
+        
+        # Use a list to hold the current step, making it mutable from the inner function
+        current_step_tracker = [0] 
 
         def update_progress(step_increment=1, message=""):
-            nonlocal current_step
-            current_step += step_increment
-            progress_percentage = int((current_step / total_steps) * 100)
+            # Modify the content of the list; no 'nonlocal' needed
+            current_step_tracker[0] += step_increment
+            progress_percentage = int((current_step_tracker[0] / total_steps) * 100)
+            if progress_percentage > 100: # Cap progress at 100%
+                progress_percentage = 100
             progress_bar.progress(progress_percentage)
             if message:
                 status_placeholder.info(f"⏳ {message}")
             time.sleep(0.1) # Small delay for UI update
 
         # 1. Extract and Summarize Context
-        update_progress(0, "Starting content extraction and summarization...")
+        update_progress(0, "Starting content extraction and summarization...") # Initial call, step_increment is 0
         if client_url:
             update_progress(0, f"Extracting content from URL: {client_url}...")
             url_text = extract_text_from_url(client_url)
@@ -112,7 +115,6 @@ if generate_button:
 
             if downloadable_text and not downloadable_text.startswith("Error"):
                 update_progress(0, "Summarizing downloadable material with AI...")
-                # This summary is primarily for context, not just the downloadable itself
                 downloadable_summary = summarize_text_with_ai(openai_client, downloadable_text, "downloadable lead material")
                 if downloadable_summary: all_summaries.append(f"Downloadable Material Summary:\n{downloadable_summary}")
             else:
@@ -121,6 +123,7 @@ if generate_button:
 
         if not all_summaries:
             status_placeholder.error("No context could be summarized. Please provide a valid URL or upload context files.")
+            progress_bar.progress(0) # Reset progress bar
             st.stop()
         
         comprehensive_context = "\n\n---\n\n".join(all_summaries)
@@ -152,7 +155,7 @@ if generate_button:
             content = generate_content_with_ai(openai_client, prompt)
             if content and f'linkedin_{obj.lower().replace(" ", "_")}' in content:
                 ads = content[f'linkedin_{obj.lower().replace(" ", "_")}']
-                for ad in ads: # Add objective type and destination link for Excel
+                for ad in ads: 
                     ad['objective_type'] = obj
                     ad['destination_link'] = details["link"]
                 linkedin_ads_all_objectives.extend(ads)
@@ -175,7 +178,7 @@ if generate_button:
             content = generate_content_with_ai(openai_client, prompt)
             if content and f'facebook_{obj.lower().replace(" ", "_")}' in content:
                 ads = content[f'facebook_{obj.lower().replace(" ", "_")}']
-                for ad in ads: # Add objective type and destination link for Excel
+                for ad in ads: 
                     ad['objective_type'] = obj
                     ad['destination_link'] = details["link"]
                 facebook_ads_all_objectives.extend(ads)
@@ -199,7 +202,6 @@ if generate_button:
         update_progress(0, "Generating Google Display content...")
         gdisplay_prompt = create_google_display_prompt(comprehensive_context)
         gdisplay_content = generate_content_with_ai(openai_client, gdisplay_prompt)
-        # The prompt for GDisplay asks for "descriptions" which are long headlines.
         if gdisplay_content and 'headlines' in gdisplay_content and 'descriptions' in gdisplay_content:
             ad_data_for_excel['google_display'] = gdisplay_content
         else:
@@ -209,7 +211,7 @@ if generate_button:
         # 3. Create Excel File
         if ad_data_for_excel:
             status_placeholder.info("✅ All content generated. Creating Excel file...")
-            progress_bar.progress(100)
+            progress_bar.progress(100) # Ensure it hits 100% at the end
             
             user_links_for_excel = {
                 "learn_more_link": learn_more_link,
@@ -230,7 +232,7 @@ if generate_button:
             status_placeholder.success(f"🎉 Excel file '{company_name_for_file}_ads_creative.xlsx' is ready for download from the sidebar!")
         else:
             status_placeholder.error("Could not generate any ad content. Please check the context and try again.")
-            progress_bar.progress(0)
+            progress_bar.progress(0) # Reset progress bar
 
 # Add some instructions or information
 st.markdown("""
