@@ -141,7 +141,7 @@ def create_linkedin_facebook_prompt(platform, context_summary, objective, count,
     Each ad object should have the following keys:
     - "version": (integer) The version number, starting from 1.
     - "ad_name": (string) {ad_name_instruction}
-    - "{text_field_name}": (string) {text_field_instruction}
+    - "{text_field_name}": (string) {text_field_instruction}...
     - "image_copy": (string) Suggested text to overlay on an image or for the visual's concept.
     - "headline": (string) Ad headline, {headline_chars}.{link_desc_field}
     - "cta_button": (string) The chosen CTA button text from the provided options.
@@ -150,7 +150,7 @@ def create_linkedin_facebook_prompt(platform, context_summary, objective, count,
     {{
       "version": 1,
       "ad_name": "CompanyName - {platform} - {objective} - Campaign Q3 - V1",
-      "{text_field_name}": "✨ Discover the future of X with our innovative solution! {text_field_instruction specifics}...",
+      "{text_field_name}": "✨ Discover the future of X with our innovative solution! {text_field_instruction}...",
       "image_copy": "Text for image: 'Revolutionize Your Workflow'",
       "headline": "Headline example within char limit",
       "cta_button": "{cta_button_options[0] if cta_button_options else 'Learn More'}"
